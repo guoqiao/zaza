@@ -89,6 +89,56 @@ class TestCharmLifecycleFuncTestRunner(ut_utils.BaseTestCase):
         self.test.assert_has_calls(test_calls)
         self.destroy.assert_has_calls(destroy_calls)
 
+    def test_func_test_runner_with_before_script(self):
+        self.patch_object(lc_func_test_runner.utils, 'get_charm_config')
+        self.patch_object(lc_func_test_runner.utils, 'generate_model_name')
+        self.patch_object(lc_func_test_runner.prepare, 'prepare')
+        self.patch_object(lc_func_test_runner.before_deploy, 'before_deploy')
+        self.patch_object(lc_func_test_runner.deploy, 'deploy')
+        self.patch_object(lc_func_test_runner.test, 'test')
+        self.patch_object(lc_func_test_runner.destroy, 'destroy')
+        self.generate_model_name.return_value = 'newmodel'
+        self.get_charm_config.return_value = {
+            'charm_name': 'mycharm',
+            'gate_bundles': ['bundle1', 'bundle2'],
+            'smoke_bundles': ['bundle2'],
+            'dev_bundles': ['bundle3', 'bundle4'],
+            'before_deploy': [
+                'zaza.charm_tests.prepare.first',
+                'zaza.charm_tests.prepare.second'],
+            'tests': [
+                'zaza.charm_tests.mycharm.tests.SmokeTest',
+                'zaza.charm_tests.mycharm.tests.ComplexTest']}
+        lc_func_test_runner.func_test_runner()
+        prepare_calls = [
+            mock.call('newmodel'),
+            mock.call('newmodel')]
+        deploy_calls = [
+            mock.call('./tests/bundles/bundle1.yaml', 'newmodel'),
+            mock.call('./tests/bundles/bundle2.yaml', 'newmodel')]
+        before_deploy_calls = [
+            mock.call('newmodel', [
+                'zaza.charm_tests.prepare.first',
+                'zaza.charm_tests.prepare.second']),
+            mock.call('newmodel', [
+                'zaza.charm_tests.prepare.first',
+                'zaza.charm_tests.prepare.second'])]
+        test_calls = [
+            mock.call('newmodel', [
+                'zaza.charm_tests.mycharm.tests.SmokeTest',
+                'zaza.charm_tests.mycharm.tests.ComplexTest']),
+            mock.call('newmodel', [
+                'zaza.charm_tests.mycharm.tests.SmokeTest',
+                'zaza.charm_tests.mycharm.tests.ComplexTest'])]
+        destroy_calls = [
+            mock.call('newmodel'),
+            mock.call('newmodel')]
+        self.prepare.assert_has_calls(prepare_calls)
+        self.deploy.assert_has_calls(deploy_calls)
+        self.before_deploy.assert_has_calls(before_deploy_calls)
+        self.test.assert_has_calls(test_calls)
+        self.destroy.assert_has_calls(destroy_calls)
+
     def test_func_test_runner_smoke(self):
         self.patch_object(lc_func_test_runner.utils, 'get_charm_config')
         self.patch_object(lc_func_test_runner.utils, 'generate_model_name')

@@ -18,6 +18,7 @@ import asyncio
 import os
 import sys
 
+import zaza.charm_lifecycle.before_deploy as before_deploy
 import zaza.charm_lifecycle.configure as configure
 import zaza.charm_lifecycle.destroy as destroy
 import zaza.charm_lifecycle.utils as utils
@@ -54,6 +55,11 @@ def func_test_runner(keep_model=False, smoke=False, dev=False, bundle=None):
         model_name = utils.generate_model_name()
         # Prepare
         prepare.prepare(model_name)
+        if 'before_deploy' in test_config:
+            # Before deploy
+            before_deploy.before_deploy(
+                model_name, test_config['before_deploy']
+            )
         # Deploy
         deploy.deploy(
             os.path.join(utils.BUNDLE_DIR, '{}.yaml'.format(t)),
